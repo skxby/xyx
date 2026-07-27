@@ -12,6 +12,12 @@ import type { ShopItem } from '@/data/shop'
 export const useShopStore = defineStore('shop', () => {
   const refreshCount = ref(0)
   const message = ref('')
+  const lastRefreshTime = ref(0)
+
+  // 保存初始库存，用于刷新恢复
+  const defaultStocks = new Map(
+    shopConfig.items.map(i => [i.itemId, i.stock])
+  )
 
   // 获取当前可用商品（根据境界过滤）
   const availableItems = computed(() => {
@@ -70,10 +76,27 @@ export const useShopStore = defineStore('shop', () => {
       return `灵石不足！刷新需要 ${shopConfig.refreshCost} 灵石`
     }
 
+    // 刷新冷却（60秒）
+    const now = Date.now()
+    if (now - lastRefreshTime.value < 60000) {
+      const remaining = Math.ceil((60000 - (now - lastRefreshTime.value)) / 1000)
+      return `仙市尚未更新，请等待 ${remaining} 秒后再试`
+    }
+
     p.attributes.spiritStones -= shopConfig.refreshCost
     refreshCount.value++
+    lastRefreshTime.value = now
+
+    // 重置所有物品库存
+    for (const item of shopConfig.items) {
+      const defaultStock = defaultStocks.get(item.itemId)
+      if (defaultStock !== undefined) {
+        item.stock = defaultStock
+      }
+    }
+
     playerStore.saveCurrentGame()
-    return `商店已刷新！（已刷新 ${refreshCount.value} 次）`
+    return `仙市已刷新！所有物品库存已恢复（已刷新 ${refreshCount.value} 次）`
   }
 
   return {

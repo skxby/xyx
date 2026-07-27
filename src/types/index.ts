@@ -139,8 +139,21 @@ export interface CultivationStats {
 
 /** 玩家完整属性 */
 export interface PlayerAttributes extends VitalStats, CombatStats, CultivationStats {
-  spiritStones: number     // 灵石
-  merit: number            // 功德
+  spiritStones: number          // 灵石
+  merit: number                 // 功德
+  breakthroughBonus: number     // 突破成功率加成（限下次突破）
+  activeBuffs: ActiveBuff[]     // 当前生效的临时增益
+  deathCount: number            // 死亡次数
+  resurrectionTime: number      // 复活倒计时结束时间戳（0=正常）
+}
+
+/** 临时增益/Buff */
+export interface ActiveBuff {
+  id: string
+  name: string
+  type: 'attack' | 'defense' | 'crit' | 'dodge' | 'speed' | 'hp_regen' | 'cultivation_speed'
+  value: number
+  remainingSeconds: number
 }
 
 // ==================== 角色/灵根 ====================
@@ -219,7 +232,8 @@ export interface Consumable extends BaseItem {
 }
 
 export interface ConsumableEffect {
-  type: 'heal_hp' | 'heal_mp' | 'buff_attack' | 'buff_defense' | 'buff_crit' | 'restore' | 'cultivation_boost'
+  type: 'heal_hp' | 'heal_mp' | 'buff_attack' | 'buff_defense' | 'buff_crit' | 'buff_speed'
+       | 'restore' | 'cultivation_boost' | 'breakthrough_boost' | 'permanent_stat'
   value: number
   duration?: number          // 持续回合数
 }
@@ -256,7 +270,9 @@ export interface Skill {
 }
 
 export interface SkillEffect {
-  type: 'damage' | 'heal' | 'buff_attack' | 'buff_defense' | 'debuff_defense' | 'dot' | 'passive_stat'
+  type: 'damage' | 'heal' | 'buff_attack' | 'buff_defense' | 'debuff_defense' | 'dot'
+       | 'passive_attack' | 'passive_defense' | 'passive_hp' | 'passive_speed'
+       | 'passive_crit' | 'passive_dodge' | 'passive_cultivation'
   value: number
   duration?: number          // 持续回合
 }
@@ -402,6 +418,43 @@ export interface GameProgress {
   dungeonsCleared: string[]
   defeatedUniqueItems: string[]
   achievements: string[]
+  completedChapters: string[]
+}
+
+// ==================== 故事线 ====================
+
+export interface StoryChapter {
+  id: string
+  title: string
+  subtitle: string
+  requiredRealm: RealmLevel
+  description: string
+  dialogue: string[]
+  rewards: { cultivation: number; stones: number; items: string[] }
+}
+
+// ==================== 每日任务 ====================
+
+export interface DailyQuest {
+  id: string
+  title: string
+  description: string
+  type: 'kill' | 'cultivate' | 'explore' | 'craft' | 'buy'
+  target: number
+  progress: number
+  reward: { cultivation: number; stones: number; itemId?: string }
+  completed: boolean
+  claimed: boolean
+}
+
+// ==================== 洞府 ====================
+
+export interface CaveDwelling {
+  level: number
+  name: string
+  cultivationBonus: number
+  upgradeCost: { stones: number; materials: { itemId: string; quantity: number }[] }
+  description: string
 }
 
 // ==================== 背包物品 ====================

@@ -165,10 +165,38 @@ export const useInventoryStore = defineStore('inventory', () => {
           p.attributes.cultivation += effect.value
           msg += `获得 ${effect.value} 修为；`
           break
-        case 'buff_attack':
-          // 丹药突破加成等（特殊处理）
-          msg += `攻击力临时提升；`
+        case 'breakthrough_boost':
+          p.attributes.breakthroughBonus = (p.attributes.breakthroughBonus || 0) + effect.value
+          msg += `突破成功率提升 ${Math.round(effect.value * 100)}%（下次突破消耗）；`
           break
+        case 'permanent_stat':
+          // 永久提升属性（神元丹等）
+          p.attributes.rootBone += effect.value
+          msg += `根骨永久提升 ${effect.value} 点；`
+          break
+        case 'buff_attack':
+        case 'buff_defense':
+        case 'buff_speed':
+        case 'buff_crit': {
+          // 临时增益效果：存入 activeBuffs
+          const buffTypeMap: Record<string, string> = {
+            buff_attack: 'attack',
+            buff_defense: 'defense',
+            buff_speed: 'speed',
+            buff_crit: 'crit',
+          }
+          const buffType = buffTypeMap[effect.type] || 'attack'
+          if (!p.attributes.activeBuffs) p.attributes.activeBuffs = []
+          p.attributes.activeBuffs.push({
+            id: `${consumable.id}_${Date.now()}`,
+            name: consumable.name,
+            type: buffType as any,
+            value: effect.value,
+            remainingSeconds: effect.duration || 30,
+          })
+          msg += `${consumable.name}效果持续 ${effect.duration || 30} 秒；`
+          break
+        }
       }
     }
 

@@ -49,6 +49,24 @@ export const DAMAGE_VARIANCE = 0.1  // ±10%
 
 // ==================== 境界常量 ====================
 
+// ==================== 死亡/复活机制 ====================
+
+/** 死亡时修为损失比例 */
+export const DEATH_CULTIVATION_LOSS = 0.25
+
+/** 复活冷却时间（毫秒） */
+export const RESURRECTION_COOLDOWN = 60000
+
+/** 死亡时境界掉落概率 */
+export const DEATH_REALM_DEMOTION_CHANCE = 0.05
+
+// ==================== 生命恢复 ====================
+
+/** HP每秒恢复率（maxHp的百分比） */
+export const HP_REGEN_RATE = 0.01
+
+// ==================== 境界常量 ====================
+
 /** 修炼速度基础值（修为/秒） */
 export const BASE_CULTIVATION_SPEED = 1
 
@@ -81,4 +99,8 @@ export const INITIAL_ATTRIBUTES = {
   fortune: 5,
   spiritStones: 0,
   merit: 0,
+  breakthroughBonus: 0,
+  activeBuffs: [],
+  deathCount: 0,
+  resurrectionTime: 0,
 }

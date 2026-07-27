@@ -6,10 +6,15 @@ import { ref, computed } from 'vue'
 import type { CombatUnit, CombatLog, CombatPhase, Enemy, CombatSkill, CombatBuff } from '@/types'
 import { usePlayerStore } from './playerStore'
 import { useInventoryStore } from './inventoryStore'
+import { usePetStore } from './petStore'
+import { useQuestStore } from './questStore'
 import { executeAttack, tickBuffs, tickDots, calcCombatPower } from '@/utils/combat'
 import { getSkillById } from '@/data/skills'
 import { processEnemyDrops } from '@/utils/loot'
 import { getEnemyById } from '@/data/enemies'
+import { DEATH_CULTIVATION_LOSS, DEATH_REALM_DEMOTION_CHANCE, RESURRECTION_COOLDOWN } from '@/data/constants'
+import { getRealmById, getPreviousRealm } from '@/data/realms'
+import { rollProbability } from '@/utils/random'
 
 export const useCombatStore = defineStore('combat', () => {
   // ==================== 状态 ====================
@@ -87,29 +92,62 @@ export const useCombatStore = defineStore('combat', () => {
   }
 
   function buildPlayerUnit(p: any): CombatUnit {
+    const playerStore = usePlayerStore()
+    const petStore = usePetStore()
+    const passives = playerStore.getPassiveBonuses()
+    const externals = petStore.getExternalBonuses()
+    // 合并临时增益
+    const tempBuffs = p.attributes.activeBuffs || []
+    let attackBuff = 0, defenseBuff = 0, speedBuff = 0, critBuff = 0
+    for (const buff of tempBuffs) {
+      switch (buff.type) {
+        case 'attack': attackBuff += buff.value; break
+        case 'defense': defenseBuff += buff.value; break
+        case 'speed': speedBuff += buff.value; break
+        case 'crit': critBuff += buff.value; break
+      }
+    }
+
     return {
       id: 'player',
       name: p.name,
       isPlayer: true,
       attributes: {
         currentHp: p.attributes.currentHp,
-        maxHp: p.attributes.maxHp,
+        maxHp: p.attributes.maxHp
+          + (p.equipment.armor?.stats.maxHp || 0)
+          + passives.maxHp
+          + externals.maxHp,
         attack: p.attributes.attack
           + (p.equipment.weapon?.stats.attack || 0)
-          + (p.equipment.accessory?.stats.attack || 0),
+          + (p.equipment.accessory?.stats.attack || 0)
+          + passives.attack
+          + externals.attack
+          + Math.floor(p.attributes.attack * attackBuff),
         defense: p.attributes.defense
           + (p.equipment.armor?.stats.defense || 0)
-          + (p.equipment.accessory?.stats.defense || 0),
+          + (p.equipment.accessory?.stats.defense || 0)
+          + passives.defense
+          + externals.defense
+          + Math.floor(p.attributes.defense * defenseBuff),
         dodge: p.attributes.dodge
-          + (p.equipment.armor?.stats.dodge || 0),
+          + (p.equipment.armor?.stats.dodge || 0)
+          + passives.dodge
+          + externals.dodge,
         accuracy: p.attributes.accuracy
           + (p.equipment.weapon?.stats.accuracy || 0)
           + (p.equipment.accessory?.stats.accuracy || 0),
         speed: p.attributes.speed
-          + (p.equipment.accessory?.stats.speed || 0),
+          + (p.equipment.accessory?.stats.speed || 0)
+          + passives.speed
+          + externals.speed
+          + speedBuff,
         critRate: p.attributes.critRate
           + (p.equipment.weapon?.stats.critRate || 0)
-          + (p.equipment.accessory?.stats.critRate || 0),
+          + (p.equipment.accessory?.stats.critRate || 0)
+          + passives.critRate
+          + externals.critRate
+          + critBuff,
         critResist: p.attributes.critResist
           + (p.equipment.armor?.stats.critResist || 0)
           + (p.equipment.accessory?.stats.critResist || 0),
@@ -210,6 +248,8 @@ export const useCombatStore = defineStore('combat', () => {
       // 奖励
       p.attributes.cultivation += enemyData.value.expReward
       p.attributes.spiritStones += enemyData.value.stoneReward
+      playerStore.incrementTotalKills()
+      try { useQuestStore().updateProgress('kill') } catch { /* quest store may not be initialized */ }
 
       logs.value.push({
         round: round.value + 1,
@@ -226,15 +266,32 @@ export const useCombatStore = defineStore('combat', () => {
 
       playerStore.saveCurrentGame()
     } else if (result === 'defeat') {
-      logs.value.push({
-        round: round.value + 1,
-        message: '💀 战斗失败！请提升实力后再来挑战。',
-        type: 'system',
-      })
-      // 战败后恢复部分生命值
+      // 死亡惩罚
       const playerStore = usePlayerStore()
       if (playerStore.player) {
-        playerStore.player.attributes.currentHp = Math.floor(playerStore.player.attributes.maxHp * 0.3)
+        const p = playerStore.player
+        const cultivationLoss = Math.floor(p.attributes.cultivation * DEATH_CULTIVATION_LOSS)
+        p.attributes.cultivation = Math.max(0, p.attributes.cultivation - cultivationLoss)
+        p.attributes.deathCount = (p.attributes.deathCount || 0) + 1
+        p.attributes.resurrectionTime = Date.now() + RESURRECTION_COOLDOWN
+        p.attributes.currentHp = Math.floor(p.attributes.maxHp * 0.3)
+
+        // 小概率境界掉落
+        let demotionMsg = ''
+        if (rollProbability(DEATH_REALM_DEMOTION_CHANCE)) {
+          const prevRealm = getPreviousRealm(p.attributes.currentRealm)
+          if (prevRealm) {
+            p.attributes.currentRealm = prevRealm.id
+            demotionMsg = `境界跌落至【${prevRealm.name}】！`
+          }
+        }
+
+        logs.value.push({
+          round: round.value + 1,
+          message: `💀 战斗败亡！损失 ${cultivationLoss} 修为，${p.attributes.deathCount} 次陨落。${demotionMsg}需等待 ${RESURRECTION_COOLDOWN / 1000} 秒复活`,
+          type: 'system',
+        })
+
         playerStore.saveCurrentGame()
       }
     }

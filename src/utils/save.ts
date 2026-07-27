@@ -19,7 +19,7 @@ export function saveGame(data: SaveData): boolean {
 }
 
 /**
- * 加载游戏
+ * 加载游戏（含版本迁移）
  */
 export function loadGame(): SaveData | null {
   try {
@@ -27,11 +27,35 @@ export function loadGame(): SaveData | null {
     if (!json) return null
     const data = JSON.parse(json) as SaveData
     if (!data.version) return null
-    return data
+    return migrateSave(data)
   } catch (e) {
     console.error('加载存档失败:', e)
     return null
   }
+}
+
+/**
+ * 存档版本迁移
+ */
+export function migrateSave(data: SaveData): SaveData {
+  // 补充缺失的字段（v1.0.0 → v1.1.0）
+  if (typeof data.player.attributes.breakthroughBonus === 'undefined') {
+    data.player.attributes.breakthroughBonus = 0
+  }
+  if (!data.player.attributes.activeBuffs) {
+    data.player.attributes.activeBuffs = []
+  }
+  if (!data.gameProgress) {
+    (data as any).gameProgress = {
+      totalKills: 0,
+      totalEvents: 0,
+      dungeonsCleared: [],
+      defeatedUniqueItems: [],
+      achievements: [],
+      completedChapters: [],
+    }
+  }
+  return data
 }
 
 /**
@@ -90,6 +114,7 @@ export function createNewSave(playerData: SaveData['player']): SaveData {
       dungeonsCleared: [],
       defeatedUniqueItems: [],
       achievements: [],
+      completedChapters: [],
     },
   }
 }

@@ -114,6 +114,67 @@ export const usePetStore = defineStore('pet', () => {
     return sects.find(s => s.id === joinedSectId.value) || null
   })
 
+  /** 获取所有外部加成（灵兽+道侣+宗门） */
+  function getExternalBonuses(): {
+    attack: number; defense: number; maxHp: number; speed: number
+    critRate: number; dodge: number; cultivationSpeed: number
+  } {
+    const bonuses = { attack: 0, defense: 0, maxHp: 0, speed: 0, critRate: 0, dodge: 0, cultivationSpeed: 0 }
+
+    // 灵兽加成
+    for (const b of activePetBonus.value) {
+      switch (b.type) {
+        case 'attack': bonuses.attack += b.value; break
+        case 'defense': bonuses.defense += b.value; break
+        case 'maxHp': bonuses.maxHp += b.value; break
+        case 'speed': bonuses.speed += b.value; break
+        case 'critRate': bonuses.critRate += b.value; break
+        case 'dodge': bonuses.dodge += b.value; break
+      }
+    }
+
+    // 道侣加成
+    if (activeCompanion.value) {
+      const comp = activeCompanion.value
+      for (const b of comp.statBonus) {
+        switch (b.type) {
+          case 'attack': bonuses.attack += b.value; break
+          case 'defense': bonuses.defense += b.value; break
+          case 'maxHp': bonuses.maxHp += b.value; break
+          case 'speed': bonuses.speed += b.value; break
+          case 'critRate': bonuses.critRate += b.value; break
+          case 'dodge': bonuses.dodge += b.value; break
+        }
+      }
+      bonuses.cultivationSpeed += activeCompanion.value.cultivationBoost || 0
+    }
+
+    // 宗门加成
+    if (currentSect.value) {
+      const sb = currentSect.value.statBonuses
+      if (sb.attack) bonuses.attack += sb.attack
+      if (sb.defense) bonuses.defense += sb.defense
+      if (sb.critRate) bonuses.critRate += sb.critRate
+      if (sb.cultivationSpeed) bonuses.cultivationSpeed += sb.cultivationSpeed
+      if (sb.speed) bonuses.speed += sb.speed
+      if (sb.maxHp) bonuses.maxHp += sb.maxHp
+    }
+
+    return bonuses
+  }
+
+  /** 获取修炼速度总加成 */
+  const totalCultivationBoost = computed(() => {
+    let boost = 0
+    if (activeCompanion.value) {
+      boost += activeCompanion.value.cultivationBoost || 0
+    }
+    if (currentSect.value) {
+      boost += currentSect.value.statBonuses.cultivationSpeed || 0
+    }
+    return boost
+  })
+
   return {
     ownedPets,
     metCompanions,
@@ -129,5 +190,7 @@ export const usePetStore = defineStore('pet', () => {
     joinSect,
     leaveSect,
     currentSect,
+    getExternalBonuses,
+    totalCultivationBoost,
   }
 })

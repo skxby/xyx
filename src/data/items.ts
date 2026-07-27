@@ -34,8 +34,8 @@ export const items: GameItem[] = [
   { id: 'pill_heal_large', name: '九转还魂丹', type: 'consumable', rarity: 'blue', description: '恢复大量生命值', price: 80, stackable: true, maxStack: 99, effects: [{ type: 'heal_hp', value: 200 }] },
   { id: 'pill_heal_immortal', name: '仙灵续命丹', type: 'consumable', rarity: 'purple', description: '恢复全部生命值', price: 300, stackable: true, maxStack: 50, effects: [{ type: 'heal_hp', value: 9999 }] },
   { id: 'pill_cultivation', name: '聚灵丹', type: 'consumable', rarity: 'green', description: '服用后获得100修为', price: 30, stackable: true, maxStack: 99, effects: [{ type: 'cultivation_boost', value: 100 }] },
-  { id: 'pill_breakthrough', name: '破境丹', type: 'consumable', rarity: 'purple', description: '提升突破成功率15%', price: 500, stackable: true, maxStack: 10, effects: [{ type: 'buff_attack', value: 0.15 }] },
-  { id: 'pill_divine', name: '神元丹', type: 'consumable', rarity: 'gold', description: '永久提升根骨+2', price: 2000, stackable: true, maxStack: 5, effects: [{ type: 'buff_attack', value: 2 }] },
+  { id: 'pill_breakthrough', name: '破境丹', type: 'consumable', rarity: 'purple', description: '提升突破成功率15%（下次突破消耗）', price: 500, stackable: true, maxStack: 10, effects: [{ type: 'breakthrough_boost', value: 0.15 }] },
+  { id: 'pill_divine', name: '神元丹', type: 'consumable', rarity: 'gold', description: '永久提升根骨+2', price: 2000, stackable: true, maxStack: 5, effects: [{ type: 'permanent_stat', value: 2 }] },
 
   // ==================== 材料 ====================
   { id: 'mat_herb', name: '灵草', type: 'material', rarity: 'white', description: '常见的基础炼丹材料', price: 2, stackable: true, maxStack: 999, materialType: 'alchemy', tier: 1 },
@@ -56,6 +56,10 @@ export const items: GameItem[] = [
   { id: 'book_passive_attack', name: '战意诀秘籍', type: 'skill_book', rarity: 'blue', description: '记载战意的秘籍', price: 400, stackable: false, maxStack: 1, skillId: 'passive_attack' },
   { id: 'book_passive_defense', name: '金刚体秘籍', type: 'skill_book', rarity: 'blue', description: '记载炼体的秘籍', price: 400, stackable: false, maxStack: 1, skillId: 'passive_defense' },
   { id: 'book_cultivation_boost', name: '吐纳心法秘籍', type: 'skill_book', rarity: 'green', description: '基础修炼法门', price: 100, stackable: false, maxStack: 1, skillId: 'cultivation_boost' },
+  { id: 'book_passive_hp', name: '长生诀秘籍', type: 'skill_book', rarity: 'purple', description: '记载长生秘法的秘籍', price: 800, stackable: false, maxStack: 1, skillId: 'passive_hp' },
+  { id: 'book_passive_speed', name: '疾风步秘籍', type: 'skill_book', rarity: 'green', description: '记载轻功步法的秘籍', price: 300, stackable: false, maxStack: 1, skillId: 'passive_speed' },
+  { id: 'book_passive_crit', name: '破军心经秘籍', type: 'skill_book', rarity: 'purple', description: '记载杀伐之道的秘籍', price: 1200, stackable: false, maxStack: 1, skillId: 'passive_crit' },
+  { id: 'book_passive_cultivation', name: '太虚吐纳术秘籍', type: 'skill_book', rarity: 'gold', description: '记载上古吐纳法的秘籍', price: 5000, stackable: false, maxStack: 1, skillId: 'passive_cultivation' },
 
   // ==================== 扩展物品 ====================
   // 武器
@@ -68,8 +72,8 @@ export const items: GameItem[] = [
   { id: 'acc_belt_stone', name: '储物腰带', type: 'accessory', rarity: 'white', level: 1, description: '附带微小储物空间的腰带', price: 10, stackable: false, maxStack: 1, stats: { speed: 2 } },
   { id: 'acc_bell_wind', name: '御风铃', type: 'accessory', rarity: 'green', level: 3, description: '系在腰间的铃铛，清脆的铃声加速移动', price: 60, stackable: false, maxStack: 1, stats: { speed: 5, dodge: 0.03 } },
   // 消耗品
-  { id: 'pill_speed', name: '疾风丹', type: 'consumable', rarity: 'green', description: '短时间内提升速度', price: 25, stackable: true, maxStack: 50, effects: [{ type: 'buff_attack', value: 0.1 }] },
-  { id: 'pill_power', name: '暴血丹', type: 'consumable', rarity: 'blue', description: '短时间内大幅提升攻击力', price: 100, stackable: true, maxStack: 20, effects: [{ type: 'buff_attack', value: 0.3 }] },
+  { id: 'pill_speed', name: '疾风丹', type: 'consumable', rarity: 'green', description: '30秒内提升速度5点', price: 25, stackable: true, maxStack: 50, effects: [{ type: 'buff_speed', value: 5, duration: 30 }] },
+  { id: 'pill_power', name: '暴血丹', type: 'consumable', rarity: 'blue', description: '30秒内提升攻击力30%', price: 100, stackable: true, maxStack: 20, effects: [{ type: 'buff_attack', value: 0.3, duration: 30 }] },
   // 材料
   { id: 'mat_crystal', name: '灵气水晶', type: 'material', rarity: 'white', description: '蕴含微量灵气的天然水晶', price: 4, stackable: true, maxStack: 999, materialType: 'alchemy', tier: 1 },
   { id: 'mat_silk_ice', name: '冰蚕丝', type: 'material', rarity: 'green', description: '极寒之地生长的冰蚕吐出的丝', price: 35, stackable: true, maxStack: 99, materialType: 'forging', tier: 2 },

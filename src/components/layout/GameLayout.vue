@@ -2,9 +2,11 @@
 // ============================================================
 // 游戏主布局 v2 - 中枢首页 + 底部导航
 // ============================================================
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { usePlayerStore } from '@/stores/playerStore'
 import { useCombatStore } from '@/stores/combatStore'
+import { usePetStore } from '@/stores/petStore'
+import { useCaveStore } from '@/stores/caveStore'
 import CultivationHub from '@/components/panels/CultivationHub.vue'
 import CombatPanel from '@/components/panels/CombatPanel.vue'
 import InventoryPanel from '@/components/panels/InventoryPanel.vue'
@@ -13,10 +15,26 @@ import ShopPanel from '@/components/panels/ShopPanel.vue'
 import CraftPanel from '@/components/panels/CraftPanel.vue'
 import PetCompanionPanel from '@/components/panels/PetCompanionPanel.vue'
 import PlayerInfoPanel from '@/components/panels/PlayerInfoPanel.vue'
+import StoryPanel from '@/components/panels/StoryPanel.vue'
+import CavePanel from '@/components/panels/CavePanel.vue'
 
 const playerStore = usePlayerStore()
 const combatStore = useCombatStore()
+const petStore = usePetStore()
+const caveStore = useCaveStore()
 const activePanel = ref<string | null>(null) // null = 中枢首页
+
+// 同步修炼加成（道侣/宗门 + 洞府）
+let boostSyncInterval: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  boostSyncInterval = setInterval(() => {
+    const total = petStore.totalCultivationBoost + caveStore.getCultivationBonus()
+    playerStore.setCultivationBoost(total)
+  }, 5000)
+})
+onUnmounted(() => {
+  if (boostSyncInterval) clearInterval(boostSyncInterval)
+})
 
 // 面板列表
 const panels = [
@@ -27,6 +45,8 @@ const panels = [
   { key: 'craft', label: '制作', icon: '🔧', component: CraftPanel },
   { key: 'pet', label: '灵兽', icon: '🐉', component: PetCompanionPanel },
   { key: 'player', label: '属性', icon: '👤', component: PlayerInfoPanel },
+  { key: 'story', label: '故事', icon: '📜', component: StoryPanel },
+  { key: 'cave', label: '洞府', icon: '🏠', component: CavePanel },
 ]
 
 const currentComponent = computed(() => {

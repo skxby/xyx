@@ -117,3 +117,10 @@ export function getNextRealm(currentId: string): Realm | undefined {
   if (!current) return undefined
   return realms.find(r => r.level === current.level + 1)
 }
+
+/** 获取上一个境界（用于死亡降级） */
+export function getPreviousRealm(currentId: string): Realm | undefined {
+  const current = getRealmById(currentId)
+  if (!current || current.level <= 0) return undefined
+  return realms.find(r => r.level === current.level - 1)
+}

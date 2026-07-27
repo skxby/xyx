@@ -10,7 +10,7 @@ import { rollProbability } from './random'
  * 计算修炼速度（修为/秒）
  * 受灵根类型、修炼方向、功法、丹药影响
  */
-export function calcCultivationSpeed(player: Player): number {
+export function calcCultivationSpeed(player: Player, externalBoost: number = 0): number {
   let speed = BASE_CULTIVATION_SPEED
 
   // 修炼方向加成
@@ -28,6 +28,9 @@ export function calcCultivationSpeed(player: Player): number {
 
   // 根骨加成（每点根骨+1%）
   speed *= 1 + player.attributes.rootBone * 0.01
+
+  // 道侣/宗门修炼速度加成
+  speed *= 1 + externalBoost
 
   return Math.max(0.1, speed)
 }
@@ -113,8 +116,15 @@ export function attemptBreakthrough(player: Player): BreakthroughResult {
   }
 
   // 判定突破成功
-  const rate = calcBreakthroughRate(player)
+  const baseRate = calcBreakthroughRate(player)
+  const breakthroughBonus = player.attributes.breakthroughBonus || 0
+  const rate = Math.min(0.95, baseRate + breakthroughBonus)
   const success = rollProbability(rate)
+
+  // 消耗破境丹加成
+  if (breakthroughBonus > 0) {
+    player.attributes.breakthroughBonus = 0
+  }
 
   if (!success) {
     // 失败扣除部分修为

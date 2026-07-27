@@ -85,8 +85,18 @@ export const useEventStore = defineStore('event', () => {
           resultMsg += `💸 损失 ${effect.value} 灵石\n`
           break
         case 'damage_hp':
-          p.attributes.currentHp = Math.max(1, p.attributes.currentHp - (effect.value || 0))
-          resultMsg += `💔 受到 ${effect.value} 点伤害\n`
+          p.attributes.currentHp = Math.max(0, p.attributes.currentHp - (effect.value || 0))
+          if (p.attributes.currentHp <= 0) {
+            // 事件致死
+            const cultivationLoss = Math.floor(p.attributes.cultivation * 0.25)
+            p.attributes.cultivation = Math.max(0, p.attributes.cultivation - cultivationLoss)
+            p.attributes.deathCount = (p.attributes.deathCount || 0) + 1
+            p.attributes.resurrectionTime = Date.now() + 60000
+            p.attributes.currentHp = Math.floor(p.attributes.maxHp * 0.3)
+            resultMsg += `💀 身受重伤，险些丧命！损失 ${cultivationLoss} 修为，死亡次数 +1\n`
+          } else {
+            resultMsg += `💔 受到 ${effect.value} 点伤害\n`
+          }
           break
         case 'heal_hp':
           p.attributes.currentHp = Math.min(p.attributes.maxHp, p.attributes.currentHp + (effect.value || 0))
@@ -110,6 +120,7 @@ export const useEventStore = defineStore('event', () => {
       }
     }
 
+    playerStore.incrementTotalEvents()
     playerStore.saveCurrentGame()
     return resultMsg
   }

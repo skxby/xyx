@@ -105,6 +105,7 @@ export interface Sect {
   description: string
   joinRequirement: string
   bonuses: { name: string; value: string }[]
+  statBonuses: { attack?: number; defense?: number; critRate?: number; cultivationSpeed?: number; maxHp?: number; speed?: number }
   dailyReward: string
 }
 
@@ -117,6 +118,7 @@ export const sects: Sect[] = [
       { name: '剑罡护体', value: '防御力+10' },
       { name: '宗门资源', value: '每日领取30灵石' },
     ],
+    statBonuses: { attack: 15, defense: 10 },
     dailyReward: '30灵石 + 1枚聚灵丹',
   },
   {
@@ -127,6 +129,7 @@ export const sects: Sect[] = [
       { name: '灵光普照', value: '悟性+3' },
       { name: '宗门药园', value: '每日领取2株灵草' },
     ],
+    statBonuses: { cultivationSpeed: 0.15 },
     dailyReward: '20灵石 + 2株灵草',
   },
   {
@@ -137,6 +140,7 @@ export const sects: Sect[] = [
       { name: '以战养战', value: '击败敌人额外获得20%修为' },
       { name: '血池修炼', value: '每日可挑战血池获得修为' },
     ],
+    statBonuses: { critRate: 0.05, attack: 8 },
     dailyReward: '50灵石（高风险高回报）',
   },
   {
@@ -147,6 +151,7 @@ export const sects: Sect[] = [
       { name: '情报共享', value: '探索触发稀有事件概率+5%' },
       { name: '集市优惠', value: '商店购买9折' },
     ],
+    statBonuses: { speed: 5, defense: 5 },
     dailyReward: '15灵石',
   },
 ]
