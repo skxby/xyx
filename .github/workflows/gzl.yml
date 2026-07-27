@@ -25,7 +25,7 @@ on:
         default: true
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PNPM_VERSION: '9'
 
 jobs:
@@ -99,15 +99,16 @@ jobs:
 
           echo "new_version=${V}" >> $GITHUB_OUTPUT
 
+          IS_TAG="${{ startsWith(github.ref, 'refs/tags/v') }}"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.deploy_release }}" = "true" ]; then
             echo "is_release=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "push" ] && startsWith("${{ github.ref }}", "refs/tags/v"); then
+          elif [ "${IS_TAG}" = "true" ]; then
             echo "is_release=true" >> $GITHUB_OUTPUT
           else
             echo "is_release=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "最终版本: v${V} | 创建 Release: ${{ steps.version.outputs.is_release || 'false' }}"
+          echo "最终版本: v${V}"
 
       - name: 更新 package.json 版本号
         if: github.event_name == 'workflow_dispatch'
@@ -225,6 +226,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: 部署到 Pages
         id: deployment
@@ -254,7 +257,9 @@ jobs:
       - name: 生成更新日志
         id: changelog
         run: |
-          echo "# 🎮 修仙世界 v${{ needs.version.outputs.version }}
+          PAGE_URL="${{ needs.deploy.outputs.page_url || format('https://{0}.github.io/{1}/', github.repository_owner, github.event.repository.name) }}"
+          cat > CHANGELOG.md << EOF
+          # 🎮 修仙世界 v${{ needs.version.outputs.version }}
 
           ## 📝 更新内容
           - 请在此处填写本次更新的具体内容
@@ -263,11 +268,11 @@ jobs:
           下载下方的 \`xiuxian-game-v${{ needs.version.outputs.version }}.zip\`，解压后用任意静态服务器运行即可。
 
           ## 🌐 在线体验
-          ${{ steps.deployment.outputs.page_url || 'https://你的用户名.github.io/你的仓库名/' }}
+          ${PAGE_URL}
 
           ---
           *自动构建于 $(date '+%Y-%m-%d %H:%M UTC')*
-          " > CHANGELOG.md
+          EOF
 
       - name: 创建 Release
         uses: softprops/action-gh-release@v2
