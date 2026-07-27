@@ -46,6 +46,7 @@ export default defineConfig({
     port: 3000,
     open: true,
   },
+  base: '/xyx/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
