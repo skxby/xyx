@@ -36,6 +36,8 @@ jobs:
     name: 📋 版本管理
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.new_version }}
       is_release: ${{ steps.version.outputs.is_release }}
