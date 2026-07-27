@@ -1,6 +1,6 @@
 {
   "name": "xiuxian-text-game",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "文字修仙放置游戏 - 在修仙世界中修炼、战斗、探索，最终飞升成仙",
   "private": true,
   "type": "module",
